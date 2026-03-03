@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-	// TODO: Create support for REPL
 
 	// Map of commands to be used
 	commands := map[string]cliCommand{
@@ -23,9 +22,10 @@ func main() {
 		},
 	}
 
+	// Initiate a new scanner to capture user input
 	scanner := bufio.NewScanner(os.Stdin)
 
-	// Infinite loop
+	// Main REPL Loop
 	for {
 		fmt.Print("Pokedex > ")                 // CLI beginning
 		scanner.Scan()                          // Waits for user input
