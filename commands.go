@@ -14,6 +14,22 @@ type cliCommand struct {
 	callback    func() error
 }
 
+// Map of Commands to be used
+func getCommands() map[string]cliCommand {
+	return map[string]cliCommand{
+		"exit": {
+			name:        "exit",
+			description: "Exits the Pokedex",
+			callback:    commandExit,
+		},
+		"help": {
+			name:        "help",
+			description: "Displays the help menu",
+			callback:    commandHelp,
+		},
+	}
+}
+
 // Exit function
 func commandExit() error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
@@ -21,14 +37,15 @@ func commandExit() error {
 	return nil
 }
 
-// Help Functions
+// Help Function
 func commandHelp() error {
-	fmt.Println(`Welcome to the Pokedex!
-	
-Usage:
+	fmt.Println()
+	fmt.Println("Welcome to the Pokedex!")
+	fmt.Println("=======================")
+	fmt.Println()
 
-help: Displays a help message
-exit: Exit the Pokedex
-	`)
+	for _, cmd := range getCommands() {
+		fmt.Printf("%s: %s\n\n", cmd.name, cmd.description)
+	}
 	return nil
 }
