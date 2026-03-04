@@ -9,6 +9,7 @@ import (
 	"os"
 )
 
+// Struct for saving the state of Prev and Next in map
 type config struct {
 	Next     *string
 	Previous *string
@@ -75,13 +76,19 @@ func commandMap(cfg *config) error {
 
 	// Create the struct for the entire response
 	type Results struct {
-		Count    int    `json:"count"`
-		Next     string `json:"next"`
-		Previous string `json:"previous"`
-		Results  []Area `json:"results"`
+		Count    int     `json:"count"`
+		Next     *string `json:"next"`
+		Previous *string `json:"previous"`
+		Results  []Area  `json:"results"`
 	}
 
 	url := "https://pokeapi.co/api/v2/location-area/"
+
+	// Checks to see if the Config file has a "Next" url listed
+	// If it does, use it
+	if cfg.Next != nil {
+		url = *cfg.Next
+	}
 
 	res, err := http.Get(url)
 	if err != nil {
@@ -100,6 +107,10 @@ func commandMap(cfg *config) error {
 	for _, area := range results.Results {
 		fmt.Println(area.Name)
 	}
+
+	// Stores the Next and Prev URL in the config file
+	cfg.Next = results.Next
+	cfg.Previous = results.Previous
 
 	return nil
 }
