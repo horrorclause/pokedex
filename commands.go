@@ -9,13 +9,13 @@ import (
 	"os"
 )
 
-// Struct for saving the state of Prev and Next in map
+// Config Struct for saving the state of Prev and Next in map
 type config struct {
 	Next     *string
 	Previous *string
 }
 
-// Struct for commands a user can use
+// CLI Commands Struct for commands a user can use
 type cliCommand struct {
 	name        string
 	description string
@@ -102,20 +102,21 @@ func commandMap(cfg *config) error {
 
 	defer res.Body.Close()
 
-	var results Results
+	var result Results
 
 	decoder := json.NewDecoder(res.Body)
-	if err := decoder.Decode(&results); err != nil {
+	if err := decoder.Decode(&result); err != nil {
 		return fmt.Errorf("Error decoding response body")
 	}
 
-	for _, area := range results.Results {
+	//Print to Terminal
+	for _, area := range result.Results {
 		fmt.Println(area.Name)
 	}
 
 	// Stores the Next and Prev URL in the config file
-	cfg.Next = results.Next
-	cfg.Previous = results.Previous
+	cfg.Next = result.Next
+	cfg.Previous = result.Previous
 
 	return nil
 }
@@ -153,20 +154,21 @@ func commandMapb(cfg *config) error {
 
 	defer res.Body.Close()
 
-	var results Results
+	var result Results
 
 	decoder := json.NewDecoder(res.Body)
-	if err := decoder.Decode(&results); err != nil {
+	if err := decoder.Decode(&result); err != nil {
 		return fmt.Errorf("Error decoding response body")
 	}
 
-	for _, area := range results.Results {
+	// Being output to terminal
+	for _, area := range result.Results {
 		fmt.Println(area.Name)
 	}
 
 	// Stores the Next and Prev URL in the config file
-	cfg.Next = results.Next
-	cfg.Previous = results.Previous
+	cfg.Next = result.Next
+	cfg.Previous = result.Previous
 
 	return nil
 
