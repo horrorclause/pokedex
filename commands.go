@@ -37,8 +37,13 @@ func getCommands() map[string]cliCommand {
 		},
 		"map": {
 			name:        "map",
-			description: "Displays the map 20 locations at a time",
+			description: "Look forward 20 results on the map",
 			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "'Map Back' - Look back 20 results on the map",
+			callback:    commandMapb,
 		},
 	}
 }
@@ -113,4 +118,56 @@ func commandMap(cfg *config) error {
 	cfg.Previous = results.Previous
 
 	return nil
+}
+
+// Map Back Command, moves backwards
+func commandMapb(cfg *config) error {
+
+	// Create the struct for the Area JSON info
+	type Area struct {
+		Name string `json:"name"`
+		Url  string `json:"url"`
+	}
+
+	// Create the struct for the entire response
+	type Results struct {
+		Count    int     `json:"count"`
+		Next     *string `json:"next"`
+		Previous *string `json:"previous"`
+		Results  []Area  `json:"results"`
+	}
+
+	// Checks to see if the Config file has a Previous URL
+	// If it doesnt, notify user
+	if cfg.Previous == nil {
+		return fmt.Errorf("You are on the first page.")
+	}
+
+	// Set the URL to the Previous set URL
+	url := *cfg.Previous
+
+	res, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("An issue was encountered reaching the URL: %s", url)
+	}
+
+	defer res.Body.Close()
+
+	var results Results
+
+	decoder := json.NewDecoder(res.Body)
+	if err := decoder.Decode(&results); err != nil {
+		return fmt.Errorf("Error decoding response body")
+	}
+
+	for _, area := range results.Results {
+		fmt.Println(area.Name)
+	}
+
+	// Stores the Next and Prev URL in the config file
+	cfg.Next = results.Next
+	cfg.Previous = results.Previous
+
+	return nil
+
 }
