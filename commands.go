@@ -9,11 +9,16 @@ import (
 	"os"
 )
 
+type config struct {
+	Next     *string
+	Previous *string
+}
+
 // Struct for commands a user can use
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*config) error
 }
 
 // Map of Commands to be used
@@ -38,14 +43,14 @@ func getCommands() map[string]cliCommand {
 }
 
 // Exit function
-func commandExit() error {
+func commandExit(cfg *config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
 // Help Function
-func commandHelp() error {
+func commandHelp(cfg *config) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("=======================")
@@ -60,7 +65,7 @@ func commandHelp() error {
 }
 
 // Map Function
-func commandMap() error {
+func commandMap(cfg *config) error {
 
 	// Create the struct for the Area JSON info
 	type Area struct {

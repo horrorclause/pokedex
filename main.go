@@ -8,6 +8,8 @@ import (
 
 func main() {
 
+	cfg := &config{}
+
 	// Initiate a new scanner to capture user input
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -26,7 +28,7 @@ func main() {
 		cmd, exists := getCommands()[commandInput] // Checks if the command exists
 
 		if exists {
-			err := cmd.callback() // Captures any errors that may be thrown
+			err := cmd.callback(cfg) // Captures any errors that may be thrown
 			if err != nil {
 				fmt.Println(err)
 			}
