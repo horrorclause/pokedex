@@ -13,7 +13,7 @@ func main() {
 	// Initiate a new scanner to capture user input
 	scanner := bufio.NewScanner(os.Stdin)
 
-	// Main REPL Loop
+	// Main REPL
 	for {
 		fmt.Print("Pokedex > ") // CLI beginning
 		scanner.Scan()          // Waits for user input
