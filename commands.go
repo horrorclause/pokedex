@@ -5,14 +5,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+
+	"github.com/horrorclause/pokedex/internal/pokecache"
 )
 
 // Config Struct for saving the state of Prev and Next in map
 type config struct {
 	Next     *string
 	Previous *string
+	Cache    *pokecache.Cache
 }
 
 // CLI Commands Struct for commands a user can use
@@ -95,18 +99,42 @@ func commandMap(cfg *config) error {
 		url = *cfg.Next
 	}
 
-	res, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("An issue was encountered reaching the URL: %s", url)
+	// Check cache FIRST
+	var body []byte
+	cachedData, found := cfg.Cache.Get(url)
+
+	if found {
+
+		fmt.Println("[+] Using cached data...")
+		fmt.Println()
+
+		// Use cached data
+		body = cachedData
+	} else {
+
+		// Make HTTP request
+		res, err := http.Get(url)
+		if err != nil {
+			return fmt.Errorf("An issue was encountered reaching the URL: %s", url)
+		}
+
+		defer res.Body.Close()
+
+		// Read response body into bytes
+		body, err = io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("error reading body")
+		}
+
+		// Save to cache
+		cfg.Cache.Add(url, body)
+
 	}
 
-	defer res.Body.Close()
-
 	var result Results
-
-	decoder := json.NewDecoder(res.Body)
-	if err := decoder.Decode(&result); err != nil {
-		return fmt.Errorf("Error decoding response body")
+	err := json.Unmarshal(body, &result)
+	if err != nil {
+		return fmt.Errorf("Error decoding")
 	}
 
 	//Print to Terminal
@@ -147,18 +175,42 @@ func commandMapb(cfg *config) error {
 	// Set the URL to the Previous set URL
 	url := *cfg.Previous
 
-	res, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("An issue was encountered reaching the URL: %s", url)
+	// Check cache FIRST
+	var body []byte
+	cachedData, found := cfg.Cache.Get(url)
+
+	if found {
+
+		fmt.Println("[+] Using cached data...")
+		fmt.Println()
+
+		// Use cached data
+		body = cachedData
+	} else {
+
+		// Make HTTP request
+		res, err := http.Get(url)
+		if err != nil {
+			return fmt.Errorf("An issue was encountered reaching the URL: %s", url)
+		}
+
+		defer res.Body.Close()
+
+		// Read response body into bytes
+		body, err = io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("error reading body")
+		}
+
+		// Save to cache
+		cfg.Cache.Add(url, body)
+
 	}
 
-	defer res.Body.Close()
-
 	var result Results
-
-	decoder := json.NewDecoder(res.Body)
-	if err := decoder.Decode(&result); err != nil {
-		return fmt.Errorf("Error decoding response body")
+	err := json.Unmarshal(body, &result)
+	if err != nil {
+		return fmt.Errorf("Error decoding")
 	}
 
 	// Being output to terminal

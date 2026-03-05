@@ -4,11 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
+
+	"github.com/horrorclause/pokedex/internal/pokecache"
 )
 
 func main() {
 
-	cfg := &config{}
+	cfg := &config{
+		Cache: pokecache.NewCache(5 * time.Second), // Setting 5 Second Cache interval
+	}
 
 	// Initiate a new scanner to capture user input
 	scanner := bufio.NewScanner(os.Stdin)
