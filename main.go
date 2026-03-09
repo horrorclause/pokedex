@@ -33,7 +33,7 @@ func main() {
 		cmd, exists := getCommands()[commandInput] // Checks if the command exists
 
 		if exists {
-			err := cmd.callback(cfg) // Captures any errors that may be thrown
+			err := cmd.callback(cfg, userInput[1:]...) // Captures any errors that may be thrown
 			if err != nil {
 				fmt.Println(err)
 			}

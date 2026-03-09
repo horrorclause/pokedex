@@ -23,7 +23,7 @@ type config struct {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, ...string) error
 }
 
 // Map of Commands to be used
@@ -49,18 +49,23 @@ func getCommands() map[string]cliCommand {
 			description: "'Map Back' - Look back 20 results on the map",
 			callback:    commandMapb,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Dive deeper into an area and discover what pokemon await!",
+			callback:    commandExplore,
+		},
 	}
 }
 
-// Exit function
-func commandExit(cfg *config) error {
+// Exit Command function
+func commandExit(cfg *config, args ...string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-// Help Function
-func commandHelp(cfg *config) error {
+// Help Command Function
+func commandHelp(cfg *config, args ...string) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("=======================")
@@ -74,8 +79,8 @@ func commandHelp(cfg *config) error {
 	return nil
 }
 
-// Map Function
-func commandMap(cfg *config) error {
+// Map Command Function
+func commandMap(cfg *config, args ...string) error {
 
 	// Create the struct for the Area JSON info
 	type Area struct {
@@ -150,7 +155,7 @@ func commandMap(cfg *config) error {
 }
 
 // Map Back Command, moves backwards
-func commandMapb(cfg *config) error {
+func commandMapb(cfg *config, args ...string) error {
 
 	// Create the struct for the Area JSON info
 	type Area struct {
@@ -224,4 +229,86 @@ func commandMapb(cfg *config) error {
 
 	return nil
 
+}
+
+// Explore Command, dive deeper into discovered locations
+func commandExplore(cfg *config, args ...string) error {
+
+	// ExploreResult contains a slice of PokemonEncounter
+	// Each PokemonEncounter contains one Pokemon
+	// Each Pokemon contains a Name string
+
+	// Innermost level of pokemon encounter, the pokemon's name
+	type Pokemon struct {
+		Name string `json:"name"`
+	}
+
+	// Middle level, this is the Encounter itself
+	type PokemonEncounter struct {
+		Pokemon Pokemon `json:"pokemon"`
+	}
+
+	// Top level, this is the whole response for the area to explore
+	type ExploreResult struct {
+		PokemonEncounter []PokemonEncounter `json:"pokemon_encounters"`
+	}
+
+	if len(args) == 0 {
+		return fmt.Errorf("No location supplied to explore")
+	}
+
+	url := "https://pokeapi.co/api/v2/location-area/"
+
+	// First index of the arguments would be the specific location
+	locationName := args[0]
+
+	url = url + locationName
+
+	fmt.Printf("Exploring %s...\n", locationName)
+
+	// Checking if the data is cached first
+	var body []byte
+
+	cachedData, found := cfg.Cache.Get(url)
+
+	if found {
+
+		fmt.Println("[+] Using cached data...")
+		fmt.Println()
+
+		// Use cached data
+		body = cachedData
+	} else {
+
+		// Make HTTP request
+		res, err := http.Get(url)
+		if err != nil {
+			return fmt.Errorf("An issue was encountered reaching the URL: %s", url)
+		}
+
+		defer res.Body.Close()
+
+		// Read response body into bytes
+		body, err = io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("error reading body")
+		}
+
+		// Save to cache
+		cfg.Cache.Add(url, body)
+
+	}
+
+	var result ExploreResult
+
+	err := json.Unmarshal(body, &result)
+	if err != nil {
+		return fmt.Errorf("Error decoding the result")
+	}
+
+	for _, pokemon := range result.PokemonEncounter {
+		fmt.Println(pokemon.Pokemon.Name)
+	}
+
+	return nil
 }
