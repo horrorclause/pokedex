@@ -6,17 +6,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 
 	"github.com/horrorclause/pokedex/internal/pokecache"
 )
 
+// Struct for pokemon
+type Pokemon struct {
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
+}
+
 // Config Struct for saving the state of Prev and Next in map
 type config struct {
 	Next     *string
 	Previous *string
 	Cache    *pokecache.Cache
+	Pokedex  map[string]Pokemon
 }
 
 // CLI Commands Struct for commands a user can use
@@ -53,6 +61,11 @@ func getCommands() map[string]cliCommand {
 			name:        "explore",
 			description: "Dive deeper into an area and discover what pokemon await!",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Try and catch a Pokemon you encounter",
+			callback:    commandCatch,
 		},
 	}
 }
@@ -308,6 +321,77 @@ func commandExplore(cfg *config, args ...string) error {
 
 	for _, pokemon := range result.PokemonEncounter {
 		fmt.Println(pokemon.Pokemon.Name)
+	}
+
+	return nil
+}
+
+// Catch Command, try and catch some Pokemon
+func commandCatch(cfg *config, args ...string) error {
+
+	url := "https://pokeapi.co/api/v2/pokemon/"
+
+	if len(args) == 0 {
+		return fmt.Errorf("No pokemon listed...")
+	}
+
+	pokemonName := args[0]
+
+	url = url + pokemonName
+
+	fmt.Printf("Throwing a Pokeball at %s...", pokemonName)
+	fmt.Println()
+
+	var body []byte
+
+	cachedData, found := cfg.Cache.Get(url)
+
+	if found {
+
+		fmt.Println("[+] Using cached data...")
+		fmt.Println()
+
+		// Use cached data
+		body = cachedData
+	} else {
+
+		// Make HTTP request
+		res, err := http.Get(url)
+		if err != nil {
+			return fmt.Errorf("An issue was encountered reaching the URL: %s", url)
+		}
+
+		defer res.Body.Close()
+
+		// Read response body into bytes
+		body, err = io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("error reading body")
+		}
+
+		// Save to cache
+		cfg.Cache.Add(url, body)
+
+	}
+
+	var result Pokemon
+
+	err := json.Unmarshal(body, &result)
+	if err != nil {
+		return fmt.Errorf("Error decoding data")
+	}
+
+	randomNum := rand.Intn(200)
+
+	if randomNum >= result.BaseExperience {
+		cfg.Pokedex[result.Name] = result
+		fmt.Printf("%s was caught!", result.Name)
+		fmt.Println()
+
+	} else {
+		fmt.Printf("%s got away!", result.Name)
+		fmt.Println()
+
 	}
 
 	return nil

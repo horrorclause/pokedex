@@ -12,7 +12,8 @@ import (
 func main() {
 
 	cfg := &config{
-		Cache: pokecache.NewCache(5 * time.Second), // Setting 5 Second Cache interval
+		Cache:   pokecache.NewCache(5 * time.Second), // Setting 5 Second Cache interval
+		Pokedex: make(map[string]Pokemon),
 	}
 
 	// Initiate a new scanner to capture user input
