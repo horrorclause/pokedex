@@ -13,10 +13,29 @@ import (
 	"github.com/horrorclause/pokedex/internal/pokecache"
 )
 
+// Pokemon Stats Struct commandInspect
+type PokemonStat struct {
+	BaseStat int `json:"base_stat"`
+	Stat     struct {
+		Name string `json:"name"`
+	} `json:"stat"`
+}
+
+// Pokem Type Struct commandInspect
+type PokemonType struct {
+	Type struct {
+		Name string `json:"name"`
+	} `json:"type"`
+}
+
 // Struct for pokemon
 type Pokemon struct {
-	Name           string `json:"name"`
-	BaseExperience int    `json:"base_experience"`
+	Name           string        `json:"name"`
+	BaseExperience int           `json:"base_experience"`
+	Height         int           `json:"height"`
+	Weight         int           `json:"weight"`
+	Stats          []PokemonStat `json:"stats"`
+	Types          []PokemonType `json:"types"`
 }
 
 // Config Struct for saving the state of Prev and Next in map
@@ -66,6 +85,11 @@ func getCommands() map[string]cliCommand {
 			name:        "catch",
 			description: "Try and catch a Pokemon you encounter",
 			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inspect Pokemon you have already caught",
+			callback:    commandInspect,
 		},
 	}
 }
@@ -392,6 +416,43 @@ func commandCatch(cfg *config, args ...string) error {
 		fmt.Printf("%s got away!", result.Name)
 		fmt.Println()
 
+	}
+
+	return nil
+}
+
+// Inspect Command, inspect caught Pokemon
+func commandInspect(cfg *config, args ...string) error {
+
+	if len(args) == 0 {
+		return fmt.Errorf("No Pokemon name supplied.")
+	}
+
+	pokemonName := args[0]
+
+	pokemon, found := cfg.Pokedex[pokemonName]
+	if !found {
+		fmt.Printf("%s is not found, go and catch one!", pokemonName)
+		fmt.Println()
+		return nil
+	}
+
+	// Printing Pokemon details
+	fmt.Println("Pokemon Details:")
+	fmt.Printf("Name: %s\n", pokemon.Name)
+	fmt.Printf("Height: %d\n", pokemon.Height)
+	fmt.Printf("Weight: %d\n", pokemon.Weight)
+
+	fmt.Println("Stats:")
+	for _, stat := range pokemon.Stats {
+		fmt.Printf(" -%s: %d", stat.Stat.Name, stat.BaseStat)
+		fmt.Println()
+	}
+
+	fmt.Println("Type:")
+	for _, t := range pokemon.Types {
+		fmt.Printf(" - %s", t.Type.Name)
+		fmt.Println()
 	}
 
 	return nil
